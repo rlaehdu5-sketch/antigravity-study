@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CineLog - 영화·드라마 시청 기록 서비스</title>
+  
+  <!-- Google Fonts: Outfit & Noto Sans KR -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- External CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Header Navigation -->
+  <header>
+    <div class="navbar">
+      <div class="logo" id="btnLogo">
+        <i data-lucide="clapperboard"></i>
+        <span>CineLog</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <nav class="nav-tabs">
+          <button class="tab-btn active" data-tab="wishlistPage">
+            <i data-lucide="bookmark-check"></i>
+            <span>찜 목록</span>
+          </button>
+          <button class="tab-btn" data-tab="calendarPage">
+            <i data-lucide="calendar"></i>
+            <span>달력</span>
+          </button>
+        </nav>
+        <button class="settings-btn" id="btnOpenSettings" title="데이터 관리">
+          <i data-lucide="settings"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main>
+    
+    <!-- Tab 1: Wishlist Page -->
+    <div id="wishlistPage" class="page active">
+      <h1>찜 목록</h1>
+
+      <!-- Filter Tabs -->
+      <div class="filter-tabs" id="wishlistFilterTabs">
+        <button class="filter-tab active" data-filter="all" onclick="setWishlistFilter('all')"> 전체</button>
+        <button class="filter-tab" data-filter="movie" onclick="setWishlistFilter('movie')"> 영화</button>
+        <button class="filter-tab" data-filter="tv" onclick="setWishlistFilter('tv')"> 시리즈</button>
+      </div>
+
+      <!-- Search & Add Hybrid Section -->
+      <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 2.5rem; position: relative;">
+        <!-- Search Component -->
+        <div class="search-container" style="flex-grow: 1; margin-bottom: 0;">
+          <div class="search-input-wrapper">
+            <i data-lucide="search" class="search-icon"></i>
+            <input type="text" class="search-input" id="searchBar" placeholder="영화 또는 드라마 제목을 검색해 보세요..." autocomplete="off">
+          </div>
+          <!-- Search suggestions dropdown -->
+          <div class="suggestions-dropdown" id="searchSuggestions">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+        
+        <!-- Manual Add Button -->
+        <button class="btn" style="flex-grow: 0; padding: 1.1rem 1.5rem; border-radius: 12px; background: var(--text-main); color: var(--bg-secondary); font-weight: 800; display: flex; align-items: center; gap: 0.5rem; height: 100%; border: none; cursor: pointer; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.1);" onclick="openAddMediaModal()">
+          <i data-lucide="plus-circle" style="width: 20px; height: 20px;"></i>
+          <span>직접 추가</span>
+        </button>
+      </div>
+
+      <!-- Wishlist Grid -->
+      <div class="wishlist-grid" id="wishlistGrid">
+        <!-- Wishlist items loaded dynamically -->
+      </div>
+    </div>
+
+    <!-- Tab 2: Calendar Page -->
+    <div id="calendarPage" class="page">
+      <h1>달력</h1>
+      
+      <div class="calendar-layout">
+        <!-- Left Side: Interactive Calendar -->
+        <div class="gradient-border-card calendar-container">
+          <div class="calendar-header">
+            <div class="calendar-title-month" id="calMonthTitle">2026년 6월</div>
+            <div class="calendar-nav">
+              <button class="cal-nav-btn" id="btnPrevMonth" title="이전 달">
+                <i data-lucide="chevron-left"></i>
+              </button>
+              <button class="cal-nav-btn" id="btnNextMonth" title="다음 달">
+                <i data-lucide="chevron-right"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="calendar-grid" id="calendarGrid">
+            <!-- Render weekdays and day cells dynamically -->
+          </div>
+        </div>
+
+        <!-- Right Side: Selected Day's Log Details -->
+        <div class="gradient-border-card daily-logs-panel">
+          <div class="panel-header">
+            <span id="logSelectedDateText">2026-06-21</span>
+            <span>시청기록</span>
+          </div>
+          <div id="dailyLogsContainer" style="display: flex; flex-direction: column; gap: 1rem;">
+            <!-- Loaded dynamically -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- LOG RECORD MODAL -->
+  <div class="modal-backdrop" id="logModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title" id="logModalTitle">시청기록 남기기</div>
+        <button class="modal-close" onclick="closeLogModal()">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <form id="logForm" onsubmit="handleLogSubmit(event)">
+        <!-- Hidden content references -->
+        <input type="hidden" id="logMediaId">
+        <input type="hidden" id="logMediaTitle">
+        <input type="hidden" id="logMediaType">
+        <input type="hidden" id="logMediaYear">
+        <input type="hidden" id="logMediaPoster">
+        <input type="hidden" id="logEditId"> <!-- populated only on edit -->
+        
+        <div class="form-group">
+          <label class="form-label" for="logDate">시청 날짜</label>
+          <input type="date" class="form-input" id="logDate" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">별점 평가</label>
+          <div class="star-rating-input" id="starRatingInput">
+            <button type="button" class="star-btn" data-star="1"><i data-lucide="star"></i></button>
+            <button type="button" class="star-btn" data-star="2"><i data-lucide="star"></i></button>
+            <button type="button" class="star-btn" data-star="3"><i data-lucide="star"></i></button>
+            <button type="button" class="star-btn" data-star="4"><i data-lucide="star"></i></button>
+            <button type="button" class="star-btn" data-star="5"><i data-lucide="star"></i></button>
+          </div>
+          <input type="hidden" id="logRatingValue" value="5" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="logReview">한 줄 후기 (최대 200자)</label>
+          <textarea class="form-input" id="logReview" maxlength="200" placeholder="시청한 소감을 짧게 남겨주세요." oninput="updateCharCount()"></textarea>
+          <div class="char-counter"><span id="charCount">0</span> / 200</div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-modal btn-modal-cancel" onclick="closeLogModal()">취소</button>
+          <button type="submit" class="btn-modal btn-modal-submit" id="btnLogSubmit">기록 저장</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADD MEDIA MODAL -->
+  <div class="modal-backdrop" id="addMediaModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">새 작품 추가</div>
+        <button class="modal-close" onclick="closeAddMediaModal()">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <form id="addMediaForm" onsubmit="handleAddMediaSubmit(event)">
+        <div class="form-group">
+          <label class="form-label" for="addMediaTitle">작품 제목</label>
+          <input type="text" class="form-input" id="addMediaTitle" placeholder="예: 인터스텔라, 기묘한 이야기" required autocomplete="off">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">구분</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="addMediaType" value="movie" class="radio-input" checked> 영화
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="addMediaType" value="tv" class="radio-input"> 시리즈
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="addMediaYear">개봉/방영 연도</label>
+          <input type="number" class="form-input" id="addMediaYear" placeholder="예: 2014 (선택)" min="1800" max="2100">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">포스터 이미지</label>
+          <div class="upload-container">
+            <div class="upload-preview-wrapper">
+              <div class="upload-preview-placeholder" id="uploadPlaceholder">
+                <i data-lucide="image" style="width: 18px; height: 18px; margin-bottom: 2px;"></i>
+                <span>미리보기</span>
+              </div>
+              <img src="" class="upload-preview" id="uploadPreview" alt="미리보기">
+            </div>
+            <div class="upload-area" onclick="triggerFileInput()">
+              <i data-lucide="upload-cloud"></i>
+              <span>포스터 파일 업로드 (권장)</span>
+              <input type="file" id="addMediaFile" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+            </div>
+          </div>
+          
+          <div class="form-divider">또는</div>
+          
+          <label class="form-label" for="addMediaUrl" style="font-size: 0.75rem;">이미지 웹 주소(URL)</label>
+          <input type="url" class="form-input" id="addMediaUrl" placeholder="https://example.com/poster.jpg (선택)" oninput="handleUrlInput(event)">
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-modal btn-modal-cancel" onclick="closeAddMediaModal()">취소</button>
+          <button type="submit" class="btn-modal btn-modal-submit">찜 목록에 추가</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- SETTINGS MODAL (DATA MANAGEMENT) -->
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">데이터 관리</div>
+        <button class="modal-close" onclick="closeSettingsModal()">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="form-group">
+        <div class="settings-note" style="margin-bottom: 1.5rem; background: rgba(8, 145, 178, 0.05); border-color: rgba(8, 145, 178, 0.1);">
+          <i data-lucide="info"></i>
+          <span>작성하신 모든 데이터는 웹 브라우저의 로컬 저장소(LocalStorage)에 안전하게 저장됩니다.</span>
+        </div>
+        
+        <button type="button" class="btn" style="background: rgba(15, 23, 42, 0.05); border: 1px solid var(--card-border); color: var(--text-main); font-weight: 600; width: 100%; margin-bottom: 0.75rem; padding: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" onclick="loadSampleData()">
+          <i data-lucide="database" style="width: 18px; height: 18px;"></i> 샘플 데이터 불러오기
+        </button>
+        
+        <button type="button" class="btn" style="background: rgba(239, 68, 68, 0.08); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.15); font-weight: 600; width: 100%; padding: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" onclick="resetAllData()">
+          <i data-lucide="trash-2" style="width: 18px; height: 18px;"></i> 데이터 전체 초기화
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- External JavaScript -->
+  <script src="app.js"></script>
+</body>
+</html>
